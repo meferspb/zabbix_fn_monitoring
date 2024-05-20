@@ -1,0 +1,232 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: 4b7f39108be14a868fb4550d522e606c
+      name: Kassa-Template-Group
+  templates:
+    - uuid: 917a901e75de461b8c32904baf4b1570
+      template: Kassa-Template-FN
+      name: Kassa-Template-FN
+      description: 'Сбор данных с Фискальных накопителей'
+      groups:
+        - name: Kassa-Template-Group
+      items:
+        - uuid: 4414e1c59dab48aeb772a0976fc947e8
+          name: AvailablePersistentMemory.data.kassa
+          type: HTTP_AGENT
+          key: AvailablePersistentMemory.data.kassa
+          status: DISABLED
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..AvailablePersistentMemory
+            - type: TRIM
+              parameters:
+                - '[]"'
+          url: 'http://{HOST.HOST}:3448/rpc/api'
+          posts: '{"method":"Api.GetInfo","id":23970,"params":{"FactoryID":{$FNNUMBER}},"jsonrpc":"2.0"}'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+        - uuid: 4be4fee8a0b74e3b9a8b14eaa233445c
+          name: fn.data.kassa
+          type: HTTP_AGENT
+          key: fn.data.kassa
+          trends: '0'
+          value_type: TEXT
+          inventory_link: SERIALNO_A
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..FactoryID
+            - type: TRIM
+              parameters:
+                - '[]'
+          url: 'http://{HOST.HOST}:3448/rpc/api'
+          posts: '{"method":"Api.ListFiscalDrives","id":53462,"params":{},"jsonrpc":"2.0"}'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+          output_format: JSON
+          tags:
+            - tag: fn.data.kassa.tag
+        - uuid: f0d14005696643ffa7c5e9ad44f7f0e8
+          name: TerminalID.data.kassa
+          type: HTTP_AGENT
+          key: fn2.data.kassa
+          delay: 1h
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..TerminalID
+            - type: TRIM
+              parameters:
+                - '[]"'
+          timeout: 10s
+          url: 'http://{HOST.HOST}:3448/rpc/api'
+          posts: '{"method":"Api.GetFiscalMemoryInfo","id":89518,"params":{"FactoryID":{$FNNUMBER3}},"jsonrpc":"2.0"}'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+        - uuid: f6282e585dca465eaafafacbbddaae34
+          name: ReceiptCount.data.kassa
+          type: HTTP_AGENT
+          key: ReceiptCount.data.kassa
+          status: DISABLED
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..ReceiptCount
+            - type: TRIM
+              parameters:
+                - '[]"'
+          url: 'http://{HOST.HOST}:3448/rpc/api'
+          posts: '{"method":"Api.GetInfo","id":23970,"params":{"FactoryID":{$FNNUMBER}},"jsonrpc":"2.0"}'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+        - uuid: b13b65c4cf994edbba7b7c2d289c0cf0
+          name: ReceiptMaxCount.data.kassa
+          type: HTTP_AGENT
+          key: ReceiptMaxCount.data.kassa
+          status: DISABLED
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..ReceiptMaxCount
+            - type: TRIM
+              parameters:
+                - '[]"'
+          url: 'http://{HOST.HOST}:3448/rpc/api'
+          posts: '{"method":"Api.GetInfo","id":23970,"params":{"FactoryID":{$FNNUMBER}},"jsonrpc":"2.0"}'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+        - uuid: 87e67748b42347cd9cf3907947f06e1d
+          name: zcount.kassa
+          type: CALCULATED
+          key: zcount.kassa
+          params: last(//ZReportMaxCount.data.kassa)-last(//ZReportCount.data.kassa)
+          triggers:
+            - uuid: 21b5ed5c853445edbb974c1dd2a73e46
+              expression: last(/Kassa-Template-FN/zcount.kassa)<=10
+              name: AlertFNZCount10
+              priority: DISASTER
+              manual_close: 'YES'
+            - uuid: 2c26404a485a4b0cbfe770eb662c27bf
+              expression: 'last(/Kassa-Template-FN/zcount.kassa)<30 and last(/Kassa-Template-FN/zcount.kassa)>10'
+              name: AlertFNZCount30
+              priority: HIGH
+              manual_close: 'YES'
+            - uuid: 6c46f341355e43cca9b9540a5c702043
+              expression: 'last(/Kassa-Template-FN/zcount.kassa)>30 and last(/Kassa-Template-FN/zcount.kassa)<46'
+              name: AlertFNZCount45
+              priority: AVERAGE
+              manual_close: 'YES'
+            - uuid: fadc41c25def47dc8b7590741a15071d
+              expression: 'last(/Kassa-Template-FN/zcount.kassa)>=46 and last(/Kassa-Template-FN/zcount.kassa)<=60'
+              name: AlertFNZCount60
+              priority: WARNING
+              manual_close: 'YES'
+        - uuid: 0bbc3c33a63b44468cad55de44b359aa
+          name: ZReportCount.data.kassa
+          type: HTTP_AGENT
+          key: ZReportCount.data.kassa
+          delay: 1h
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..ZReportCount
+            - type: TRIM
+              parameters:
+                - '[]"'
+          timeout: 10s
+          url: 'http://{HOST.HOST}:3448/rpc/api'
+          posts: '{"method":"Api.GetInfo","id":23970,"params":{"FactoryID":{$FNNUMBER3}},"jsonrpc":"2.0"}'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+        - uuid: e3cb044596b840c18725ad2c116a39c8
+          name: ZReportMaxCount.data.kassa
+          type: HTTP_AGENT
+          key: ZReportMaxCount.data.kassa
+          delay: 1h
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $..ZReportMaxCount
+            - type: TRIM
+              parameters:
+                - '[]"'
+          timeout: 10s
+          url: 'http://{HOST.HOST}:3448/rpc/api'
+          posts: '{"method":"Api.GetInfo","id":23970,"params":{"FactoryID":{$FNNUMBER3}},"jsonrpc":"2.0"}'
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+      discovery_rules:
+        - uuid: eb6034da50b042b48cccbb9db1f889f2
+          name: fn.discovery
+          type: HTTP_AGENT
+          key: fn.discovery
+          lifetime: 10d
+          item_prototypes:
+            - uuid: 2e082c7233a9471b87ad88db1659cd3b
+              name: '{#FNID}'
+              type: HTTP_AGENT
+              key: 'fn.discovery[{#FNID}]'
+              history: 30d
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - $..FactoryID
+              timeout: 10s
+              url: 'http://{HOST.HOST}:3448/rpc/api'
+              posts: '{"method":"Api.ListFiscalDrives","id":53462,"params":{},"jsonrpc":"2.0"}'
+              headers:
+                - name: Content-Type
+                  value: application/json
+              request_method: POST
+          timeout: 10s
+          url: 'http://{HOST.IP}:3448/rpc/api'
+          posts: '{"method":"Api.ListFiscalDrives","id":53462,"params":{},"jsonrpc":"2.0"}'
+          post_type: JSON
+          headers:
+            - name: Content-Type
+              value: application/json
+          request_method: POST
+          lld_macro_paths:
+            - lld_macro: '{#FNID}'
+              path: $..FactoryID
+      macros:
+        - macro: '{$FNNUMBER2}'
+          value: last(//fn.data.kassa)
+        - macro: '{$FNNUMBER3}'
+          value: '""'
+      valuemaps:
+        - uuid: 7e59bb2f49634cee8b8f4a8d6dcb827d
+          name: fn.data.kassa
+          mappings:
+            - type: REGEXP
+              value: '[a-zA-Z0-9]'
+              newvalue: fn2.data.kassa
+  graphs:
+    - uuid: 0442f2a2533a4dfdbe133667e6251567
+      name: 'Остаток Zcount'
+      graph_items:
+        - color: 199C0D
+          calc_fnc: ALL
+          item:
+            host: Kassa-Template-FN
+            key: zcount.kassa
