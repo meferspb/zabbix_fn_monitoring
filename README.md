@@ -1,2 +1,2 @@
-# zabbix fiscal kassa monitoring
+# zabbix fiscal uzbekistan kassa monitoring
 Мониторинг фискальных накопителей Узбекистана в Zabbix. Удалённый мониторинг оставшихся смен и оповещение при малом остатке. Для своевременной замены фискальников.
